@@ -28,6 +28,24 @@ The script:
 7. Exports tables (TSV), plots (PNG/PDF), and an optional `.rds` with all objects for reproducibility.
 
 ---
+## Citations & References
+
+If you use this workflow, please cite:
+
+**This repository:**
+> Márquez-Ortiz RA. *NicheNet Ligand Activity + Target-GSEA (Bulk Two-Dataset Workflow)*. GitHub repository, 2026.
+
+**NicheNet:**
+> Browaeys R, Saelens W, Saeys Y.  
+> *NicheNet: modeling intercellular communication by linking ligands to target genes.*  
+> Nature Methods (2020).  
+> https://doi.org/10.1038/s41592-019-0667-5
+
+**clusterProfiler (GSEA implementation):**
+> Wu T, Hu E, Xu S, et al.  
+> *clusterProfiler 4.0: A universal enrichment tool for interpreting omics data.*  
+> The Innovation (2021).  
+> https://doi.org/10.1016/j.xinn.2021.100141
 
 ## Requirements
 
@@ -51,21 +69,3 @@ remotes::install_github("saeyslab/nichenetr")
 
 # Optional (for composite plots)
 install.packages("patchwork")
-## Citations & References
-
-If you use this workflow, please cite:
-
-**This repository:**
-> Márquez-Ortiz RA. *NicheNet Ligand Activity + Target-GSEA (Bulk Two-Dataset Workflow)*. GitHub repository, 2026.
-
-**NicheNet:**
-> Browaeys R, Saelens W, Saeys Y.  
-> *NicheNet: modeling intercellular communication by linking ligands to target genes.*  
-> Nature Methods (2020).  
-> https://doi.org/10.1038/s41592-019-0667-5
-
-**clusterProfiler (GSEA implementation):**
-> Wu T, Hu E, Xu S, et al.  
-> *clusterProfiler 4.0: A universal enrichment tool for interpreting omics data.*  
-> The Innovation (2021).  
-> https://doi.org/10.1016/j.xinn.2021.100141
