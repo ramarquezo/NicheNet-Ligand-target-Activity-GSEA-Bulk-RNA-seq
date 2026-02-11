@@ -30,19 +30,19 @@ The script:
 
 # Example usage
  ---------------------------
- run_nichenet_bulk(
-   sender_file   = "sender_DE.xlsx",\n
-   receiver_file = "receiver_DE.xlsx",
-   sender_label = "Sender_RNA",
-   receiver_label = "Receiver_RNA",
-   prefix = "RNA_RNA",
-   outdir = ".",
-   resources_mode = "zenodo",  # "package" or "zenodo"
-   sender_ligand_mode = "DE_up",
-   do_go_dotplots = TRUE,
-   organism_db = "org.Mm.eg.db",
-   go_ont = "BP"
- )
+#run_nichenet_bulk(
+   #sender_file   = "sender_DE.xlsx",
+   #receiver_file = "receiver_DE.xlsx",
+   #sender_label = "Sender_RNA",
+   #receiver_label = "Receiver_RNA",
+   #prefix = "RNA_RNA",
+   #outdir = ".",
+   #resources_mode = "zenodo",  # "package" or "zenodo"
+   #sender_ligand_mode = "DE_up",
+   #do_go_dotplots = TRUE,
+   #organism_db = "org.Mm.eg.db",
+   #go_ont = "BP"
+ #)
 ---
 ## Citations & References
 
