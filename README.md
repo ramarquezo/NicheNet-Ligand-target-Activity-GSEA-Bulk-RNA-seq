@@ -30,7 +30,7 @@ The script:
 
 # Example usage
  ---------------------------
-## run_nichenet_bulk(  
+ run_nichenet_bulk(  
    sender_file   = "sender_DE.xlsx",  
    receiver_file = "receiver_DE.xlsx",  
    sender_label = "Sender_RNA",  
@@ -42,7 +42,7 @@ The script:
    do_go_dotplots = TRUE,  
    organism_db = "org.Mm.eg.db",  
    go_ont = "BP"  
- ## )
+  )
 ---
 ## Citations & References
 
