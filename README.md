@@ -26,23 +26,23 @@ The script:
 5. Builds ligand-specific **target gene sets** (top *N* targets per ligand by regulatory potential).
 6. Runs **GSEA** on the **receiver ranked list** using those ligand target gene sets.
 7. Exports tables (TSV), plots (PNG/PDF), and an optional `.rds` with all objects for reproducibility.
-8. Exports pdf and svg figures for the GSEA enriched GO terms for each top sender-receiver netweork using genes with padj < 0.05 in the receiver.
+8. Exports pdf and svg figures for **GSEA** enriched **GO terms** for each top sender-receiver netweork from **6**.
 
 # Example usage
  ---------------------------
-# run_nichenet_bulk(
-#   sender_file   = "sender_DE.xlsx",
-#   receiver_file = "receiver_DE.xlsx",
-#   sender_label = "Sender_RNA",
-#   receiver_label = "Receiver_RNA",
-#   prefix = "RNA_RNA",
-#   outdir = ".",
-#   resources_mode = "zenodo",  # "package" or "zenodo"
-#   sender_ligand_mode = "DE_up",
-#   do_go_dotplots = TRUE,
-#   organism_db = "org.Mm.eg.db",
-#   go_ont = "BP"
-# )
+ run_nichenet_bulk(
+   sender_file   = "sender_DE.xlsx",
+   receiver_file = "receiver_DE.xlsx",
+   sender_label = "Sender_RNA",
+   receiver_label = "Receiver_RNA",
+   prefix = "RNA_RNA",
+   outdir = ".",
+   resources_mode = "zenodo",  # "package" or "zenodo"
+   sender_ligand_mode = "DE_up",
+   do_go_dotplots = TRUE,
+   organism_db = "org.Mm.eg.db",
+   go_ont = "BP"
+ )
 ---
 ## Citations & References
 
