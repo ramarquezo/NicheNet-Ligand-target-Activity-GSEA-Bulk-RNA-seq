@@ -31,7 +31,7 @@ The script:
 # Example usage
  ---------------------------
  run_nichenet_bulk(  
-    sender_file   = "sender_DE.xlsx",  
+&nbsp;&nbsp;&nbsp;sender_file   = "sender_DE.xlsx",  
     receiver_file = "receiver_DE.xlsx",  
     sender_label = "Sender_RNA",  
     receiver_label = "Receiver_RNA",  
