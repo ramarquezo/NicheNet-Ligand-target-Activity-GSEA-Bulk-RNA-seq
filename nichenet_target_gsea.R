@@ -8,11 +8,9 @@
 #  4) Infers ligand activities (sender -> receiver)
 #  5) Adds sender DE evidence (logFC, padj) for top ligands
 #  6) Builds ligand->target links for top ligands
-#  7) Exports: TSV + plots + QC text + optional GO dotplots per ligand
+#  7) Exports: TSV + plots + QC text + GO dotplots per ligand
 #
 # Notes:
-#  - No setwd()/choose.dir(); you pass file paths and outdir.
-#  - Uses file.path() everywhere (cross-platform).
 #  - Uses explicit dplyr:: prefixes to avoid Bioconductor masking.
 #  - Handles nichenetr output schema differences (test_ligand vs ligand).
 # ============================================================
@@ -409,16 +407,16 @@ run_nichenet_bulk <- function(
     ggplot2::theme(plot.margin = ggplot2::margin(5.5, 80, 5.5, 5.5)) +
     ggplot2::labs(x = paste0(sender_label, " log2FC"), y = NULL, title = "Sender evidence (top ligands)")
   
-  # Optional composite if patchwork exists
+  # Composite if patchwork exists
   p_summary <- NULL
   if (requireNamespace("patchwork", quietly = TRUE)) {
     p_summary <- (p_top20 | p_sender_fc) + patchwork::plot_layout(widths = c(1, 1))
   }
   
-  # GO dotplots per ligand (optional)
-
-  # GO dotplots per ligand (optional)
+  # GO dotplots per ligand
   dotplots_list <- list()
+  go_tables_all <- list()
+  
   if (isTRUE(do_go_dotplots)) {
     message("Running GO enrichment dotplots per top ligands...")
     
@@ -435,16 +433,24 @@ run_nichenet_bulk <- function(
     # Helper: convert to TitleCase for mouse if you uppercased everything
     to_title_case_mouse <- function(x) {
       x <- as.character(x)
-      x <- ifelse(
+      ifelse(
         is.na(x), NA_character_,
         paste0(toupper(substr(x, 1, 1)), tolower(substr(x, 2, nchar(x))))
       )
-      x
     }
     
-    # Pull all targets for top ligands (don’t group here)
+    # Pull all targets for top ligands
     lt_sub <- ligand_target_links %>%
       dplyr::filter(.data$ligand %in% top_ligands_plot)
+    
+    # Precompute receiver significant symbols once (faster, cleaner)
+    receiver_sig <- receiver_df %>%
+      dplyr::mutate(.sym = clean_symbols(.data[[symbol_col]])) %>%
+      dplyr::filter(!is.na(.sym), is.finite(.data[[padj_col]])) %>%
+      dplyr::mutate(.sym = if (to_upper) toupper(.sym) else .sym) %>%
+      dplyr::filter(.data[[padj_col]] < go_padj_cutoff) %>%
+      dplyr::pull(.sym) %>%
+      unique()
     
     run_go_for_ligand <- function(ligand_name) {
       targets <- lt_sub %>%
@@ -454,28 +460,20 @@ run_nichenet_bulk <- function(
       
       if (length(targets) == 0) return(NULL)
       
-      # Keep only targets that are significant in receiver (as in your original)
-      receiver_sig <- receiver_df %>%
-        dplyr::mutate(.sym = clean_symbols(.data[[symbol_col]])) %>%
-        dplyr::filter(!is.na(.sym), is.finite(.data[[padj_col]])) %>%
-        dplyr::mutate(.sym = if (to_upper) toupper(.sym) else .sym) %>%
-        dplyr::filter(.data[[padj_col]] < go_padj_cutoff) %>%
-        dplyr::pull(.sym) %>%
-        unique()
-      
+      # Keep only targets significant in receiver
       targets_sig <- intersect(targets, receiver_sig)
       if (length(targets_sig) < min_targets_go) {
         message("Skipping ", ligand_name, ": too few significant targets (n = ", length(targets_sig), ")")
         return(NULL)
       }
       
-      # If mouse + we uppercased earlier, convert to TitleCase for SYMBOL mapping
+      # Mouse SYMBOL mapping: TitleCase if needed
       targets_for_map <- targets_sig
       if (organism_db == "org.Mm.eg.db") {
         targets_for_map <- to_title_case_mouse(targets_for_map)
       }
       
-      # Map SYMBOL -> ENTREZID (robust)
+      # Map SYMBOL -> ENTREZID
       entrez <- AnnotationDbi::mapIds(
         x = OrgDb,
         keys = targets_for_map,
@@ -483,8 +481,7 @@ run_nichenet_bulk <- function(
         keytype = "SYMBOL",
         multiVals = "first"
       )
-      
-      entrez <- unique(na.omit(unname(entrez)))
+      entrez <- unique(stats::na.omit(unname(entrez)))
       
       if (length(entrez) < min_targets_go) {
         message("Skipping ", ligand_name, ": too few mapped Entrez IDs (n = ", length(entrez), ")")
@@ -504,6 +501,15 @@ run_nichenet_bulk <- function(
         return(NULL)
       }
       
+      go_tbl <- as.data.frame(ego@result)
+      
+      # Save TSV per ligand
+      readr::write_tsv(
+        go_tbl,
+        file.path(go_outdir, paste0("go_enrichment_", ligand_name, ".tsv"))
+      )
+      
+      # Plot
       p <- clusterProfiler::dotplot(ego, showCategory = go_showCategory) +
         ggplot2::ggtitle(paste0(
           ligand_name, " predicted targets (NicheNet)\n",
@@ -514,14 +520,27 @@ run_nichenet_bulk <- function(
       
       ggplot2::ggsave(file.path(go_outdir, paste0("dotplot_", ligand_name, ".pdf")), p, width = 7, height = 5)
       ggplot2::ggsave(file.path(go_outdir, paste0("dotplot_", ligand_name, ".png")), p, width = 7, height = 5, dpi = 300)
-      p
+      
+      # IMPORTANT: return BOTH plot + table
+      list(plot = p, table = go_tbl)
     }
     
     for (lig in top_ligands_plot) {
-      p <- run_go_for_ligand(lig)
-      if (!is.null(p)) dotplots_list[[lig]] <- p
+      res_go <- run_go_for_ligand(lig)
+      if (!is.null(res_go)) {
+        dotplots_list[[lig]] <- res_go$plot
+        go_tables_all[[lig]] <- dplyr::as_tibble(res_go$table) %>%
+          dplyr::mutate(ligand = lig, .before = 1)
+      }
     }
     
+    # Merge all GO tables (optional but useful)
+    if (length(go_tables_all) > 0) {
+      go_merged <- dplyr::bind_rows(go_tables_all)
+      readr::write_tsv(go_merged, file.path(go_outdir, "all_ligands_GO.tsv"))
+    }
+    
+    # Multi-page PDF with all plots
     if (length(dotplots_list) > 0) {
       grDevices::pdf(file.path(go_outdir, "all_ligands_GO.pdf"), width = 7, height = 5)
       for (p in dotplots_list) print(p)
